@@ -11,7 +11,9 @@ class CPU:
         self.reg = [0] * 8    # 8 general-purpose registers
         self.pc = 0           # program counter, pointing at current command
         self.sp = self.reg[7] # stack pointer, reg[7] reserved position
-        self.fl = 0b0000000   # 00000LGE
+        self.fl_l = False     # 00000LGE
+        self.fl_g = False
+        self.fl_e = False
         self.branch_table = {
             
         }
@@ -65,13 +67,13 @@ class CPU:
         elif op == "CMP":
             if reg_a == reg_b:
                 # set equal flag E to 1, else 0
-                self.fl = 0b00000001
+                self.fl_e = True
             if reg_a < reg_b:
                 # set lass flag L to 1, else 0
-                self.fl = 0b00000100
+                self.fl_l = True
             if reg_a > reg_b:
                 # set greater flag G to 1, else 0
-                self.fl = 0b00000010
+                self.fl_g = True
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -131,20 +133,20 @@ class CPU:
                 # +1 is an register address, +2 is a value
                 self.reg[reg_a] = reg_b
                 self.pc += 3
-                print('LDI', self.pc)
+            elif instruction == HLT: # HLT - halt
+                running = False
+                self.pc += 1
             elif instruction == PRN: # print
                 # get value from +1 (address at register)
                 value = self.reg[reg_a]
                 print(value)
                 self.pc += 2
-                print('PRN', self.pc)
             elif instruction == MUL:
                 self.alu('MUL', reg_a, reg_b)
                 self.pc += 3
             elif instruction == ADD:
                 self.alu('ADD', reg_a, reg_b)
                 self.pc += 3
-                print('ADD', self.pc)
             elif instruction == PUSH: # push value given to register
                 # get value from register address
                 value = self.reg[reg_a]
@@ -167,17 +169,13 @@ class CPU:
                 self.reg[self.sp] -= 1
                 self.ram[self.reg[self.sp]] = return_address
                 # set pc to value in given register
-                reg_idx = reg_a
-                dest_dddress = self.reg[reg_idx]
-                self.pc = dest_dddress
-                print('CAL', self.pc)
+                self.pc = self.reg[reg_a]
             elif instruction == RET:
                 # pop return address from top of stack
                 return_address = self.ram[self.reg[self.sp]]
                 self.reg[self.sp] += 1
                 # set pc
                 self.pc = return_address
-                print('RET', self.pc)
             
             # sprint
             elif instruction == CMP: # compare reg_a and reg_b
@@ -187,19 +185,16 @@ class CPU:
                 # set pc to the given register address
                 self.pc = self.reg[reg_a]
             elif instruction == JEQ: # if E is 1, jump to given address
-                if self.fl == 0b00000001:
+                if self.fl_e == True:
                     self.pc = self.reg[reg_a]
                 else:
                     self.pc += 2
             elif instruction == JNE: # if E is 0, jump to stored given address
-                if self.fl != 0b00000001:
+                if self.fl_e == False:
                     self.pc = self.reg[reg_a]
                 else:
                     self.pc += 2
 
-            elif instruction == HLT: # HLT - halt
-                running = False
-                self.pc += 1
             else:
                 print('Unknown Instruction:', instruction, self.pc)
                 sys.exit(1)
