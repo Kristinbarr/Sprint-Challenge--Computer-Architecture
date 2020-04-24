@@ -14,28 +14,11 @@ class CPU:
         self.fl_l = False     # 00000LGE
         self.fl_g = False
         self.fl_e = False
-        self.branch_table = {
-            
-        }
 
     def load(self):
         """Load a program into memory."""
 
         address = 0
-
-        # # For now, we've just hardcoded a program:
-        # program = [
-        #     # From print8.ls8
-        #     0b10000010, # LDI R0,8
-        #     0b00000000,
-        #     0b00001000,
-        #     0b01000111, # PRN R0
-        #     0b00000000,
-        #     0b00000001, # HLT
-        # ]
-        # for instruction in program:
-        #     self.ram[address] = instruction
-        #     address += 1
 
         try:
             with open(sys.argv[1]) as f:
@@ -50,8 +33,6 @@ class CPU:
         except FileNotFoundError:
             print(f"{sys.argv[0]}: {sys.argv[1]} not found")
             sys.exit(2)
-
-        # print('RAM:', self.ram)
 
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
@@ -133,25 +114,20 @@ class CPU:
                 # +1 is an register address, +2 is a value
                 self.reg[reg_a] = reg_b
                 self.pc += 3
-                # print('LDI', self.pc)
             elif instruction == HLT: # HLT - halt
                 running = False
                 self.pc += 1
-                # print('HLT', self.pc)
             elif instruction == PRN: # print
                 # get value from +1 (address at register)
                 value = self.reg[reg_a]
                 print(value)
                 self.pc += 2
-                # print('PRN', self.pc)
             elif instruction == MUL:
                 self.alu('MUL', reg_a, reg_b)
                 self.pc += 3
-                # print('MUL', self.pc)
             elif instruction == ADD:
                 self.alu('ADD', reg_a, reg_b)
                 self.pc += 3
-                # print('ADD', self.pc)
             elif instruction == PUSH: # push value given to register
                 # get value from register address
                 value = self.reg[reg_a]
@@ -159,7 +135,6 @@ class CPU:
                 self.sp -= 1
                 self.ram_write(self.sp, value)
                 self.pc += 2
-                # print('PUSH', self.pc)
             elif instruction == POP: # return value given to register
                 # get value from top of stack
                 value = self.ram_read(self.sp)
@@ -168,7 +143,6 @@ class CPU:
                 # decrement stack pointer and add to program counter
                 self.sp -= 1
                 self.pc += 2
-                # print('POP', self.pc)
             elif instruction == CAL: # jumps to address given
                 # compute return address after call finishes
                 return_address = self.pc + 2
@@ -177,36 +151,30 @@ class CPU:
                 self.ram[self.reg[self.sp]] = return_address
                 # set pc to value in given register
                 self.pc = self.reg[reg_a]
-                # print('CAL', self.pc)
             elif instruction == RET:
                 # pop return address from top of stack
                 return_address = self.ram[self.reg[self.sp]]
                 self.reg[self.sp] += 1
                 # set pc
                 self.pc = return_address
-                # print('RET', self.pc)
             
-            # sprint
+            # SPRINT
             elif instruction == CMP: # compare reg_a and reg_b
                 self.alu('CMP', reg_a, reg_b)
                 self.pc += 3
-                # print('CMP', self.pc)
             elif instruction == JMP: # jump to given reg address
                 # set pc to the given register address
                 self.pc = self.reg[reg_a]
-                # print('JMP', self.pc)
             elif instruction == JEQ: # if E is 1, jump to given address
                 if self.fl_e == True:
                     self.pc = self.reg[reg_a]
                 else:
                     self.pc += 2
-                # print('JEQ', self.pc)
             elif instruction == JNE: # if E is 0, jump to stored given address
                 if self.fl_e == False:
                     self.pc = self.reg[reg_a]
                 else:
                     self.pc += 2
-                # print('JNE', self.pc)
 
             else:
                 print('Unknown Instruction:', instruction)
